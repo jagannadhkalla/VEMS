@@ -1,20 +1,32 @@
 {
-  "name": "server",
+  "name": "vemsback",
   "version": "1.0.0",
-  "description": "",
-  "main": "server1.js",
-  "type": "module",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "description": "",
   "dependencies": {
+    "async": "^3.2.6",
+    "await": "^0.2.6",
+    "body-parser": "^1.20.2",
+    "cloudinary": "^2.5.0",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.21.0",
+    "json-web-token": "^3.2.0",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.0",
+    "nodemailer": "^6.9.15",
+    "nodemon": "^3.1.5",
+    "path": "^0.12.7",
+    "typeorm": "^0.3.20",
     "xlsx": "^0.18.5"
   }
 }

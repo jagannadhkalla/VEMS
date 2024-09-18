@@ -5,11 +5,13 @@ const xlsx = require('xlsx');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
-const route = express.Router();
+const router = express.Router();
 const db = require('../db');
 const { Console } = require('console');
 const cloudinary = require('cloudinary').v2;
 const async = require('async');
+const registerationMail = require('../mailService/registerationMail');
+const forgotPasswordMail = require('../mailService/forgotPasswordMail');
 
 // Cloudinary configuration
 cloudinary.config({
@@ -43,7 +45,7 @@ const generateRandomPassword = (length = 6) => {
 };
 
 // upload Excel file and add employee data
-route.post('/upload', upload.single('file'), (req, res) => {
+router.post('/upload', upload.single('file'), (req, res) => {
     const filePath = path.join(uploadsDir, req.file.filename);
     
     const workbook = xlsx.readFile(filePath);
@@ -200,7 +202,7 @@ route.post('/upload', upload.single('file'), (req, res) => {
 });
 
 // add employee with cloudinary image upload
-route.post('/add-employee', upload.single('employeeImage'), (req, res) => {
+router.post('/addEmployee', upload.single('employeeImage'), (req, res) => {
     const {
         employeeId,
         employeeName,
@@ -213,7 +215,6 @@ route.post('/add-employee', upload.single('employeeImage'), (req, res) => {
         employeeContact,
         employeeEmergencyContact
     } = req.body;
-
     const createTableQuery = `
         CREATE TABLE IF NOT EXISTS employeeDetails (
             employeeId VARCHAR(100) PRIMARY KEY, 
@@ -230,14 +231,11 @@ route.post('/add-employee', upload.single('employeeImage'), (req, res) => {
             employeeImage VARCHAR(255)
         );
     `;
-
     db.query(createTableQuery, (err, result) => {
         if (err) throw err;
         console.log('Table created or already exists.');
     });
-
     const employeePassword = generateRandomPassword();
-
     if (req.file) {
         const filePath = req.file.path;
 
@@ -285,54 +283,19 @@ route.post('/add-employee', upload.single('employeeImage'), (req, res) => {
             db.query(query, values, (err, result) => {
                 if (err) {
                     console.error('Error inserting data into MySQL:', err);
-                    res.status(500).send('Error saving data');
+                    res.status(500).send('Error inserting data');
                 } else {
                     console.log('Data inserted/updated successfully.');
-
-                    const mailOptions = {
-                        from: 'harshit995905@gmail.com',
-                        to: employeeEmail,
-                        subject: 'Registration Confirmation - Account Details',
-                        html:`<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
-                                <div style="max-width: 700px; margin: 40px auto; background-color: #5bb450">
-                                    <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
-                                        
-                                        <div style="background-color: #5bb450; padding: 20px; border-radius: 8px 8px 0 0;">
-                                        <h1 style="color: #ffffff; margin: 0; font-size: 24px;text-align: center; font-weight: bold">Registration Confirmation</h1>
-                                        </div>
-                                        
-                                        <div style="padding: 20px; color: #333333; text-align: left;">
-                                            <p style="line-height: 1.6;">Dear ${employeeName},</p>
-                                            <p style="line-height: 1.6;">We are pleased to inform you that your employee details have been successfully updated in our records.</p>
-                                            <p style="line-height: 1.6;">Here are your account details:</p>
-                                            <p style="line-height: 1.6; margin: 0;"><strong>Employee ID:</strong> ${employeeId}</p>
-                                            <p style="line-height: 1.6; margin: 0;"><strong>Password:</strong> ${employeePassword}</p>
-                                            <p style="line-height: 1.6; margin-top: 20px;">Please ensure to change your password after logging in for the first time.</p>
-                                            <p style="line-height: 1.6;">Best regards,</p>
-                                            <p style="line-height: 1.0;"><strong>VEMS Support Team</strong></P>
-                                            <p style="line-height: 1.0;">Contact No: 74166 33125</p>
-                                            <p style="line-height: 1.0;">Email ID: vems-support@gmail.com</p>
-                                        </div>
-                                        
-                                        <div style="padding: 20px; text-align: center; color: #aaaaaa; font-size: 12px;">
-                                        <p>&copy; Copyright VTS Enterprises India Private Ltd, 2016</p>
-                                        </div>
-                                        
-                                    </div>
-                                </div>
-                            </body>`,
-                    };
-
-                    transporter.sendMail(mailOptions, (error, info) => {
-                        if (error) {
-                            console.error('Error sending Email:', error);
-                            res.status(500).send('Error sending Email');
-                        } else {
-                            console.log('Email sent:', info.response);
-                            res.send('Employee added successfully and Email sent');
+                    const query1 = 'SELECT * FROM employeeDetails WHERE employeeEmail = ?'
+                    db.query(query1, employeeEmail, (err1, result1)=>{
+                        if(err1){
+                            console.log(err1)
+                            res.send(err1)
                         }
-                        console.log(employeeId, employeeEmail);
-                    });
+                        console.log(result1[0])
+                        registerationMail(result1[0])
+                        res.send('successfully added')
+                    })
                 }
             });
         });
@@ -341,8 +304,7 @@ route.post('/add-employee', upload.single('employeeImage'), (req, res) => {
     }
 });
 
-//login
-route.post('/login', (req, res) => {
+router.post('/login', (req, res) => {
     const { empId, password } = req.body;
     const query = 'SELECT * FROM employeeDetails WHERE employeeId = ?';
     db.query(query, [empId], async (err, results) => {
@@ -356,79 +318,38 @@ route.post('/login', (req, res) => {
     });
 });
 
-//reset password mail
-route.post('/reset-password', (req, res) => {
+router.post('/resetPassword', (req, res) => {
     const { employeeId } = req.body;
-    const {employeeEmail} = req.body;
 
-    const checkEmployeeQuery = 'SELECT * FROM employeeDetails WHERE employeeId = ? AND employeeEmail = ?';
-    db.query(checkEmployeeQuery, [employeeId],[employeeEmail], (err, results) => {
+    const checkEmployeeQuery = 'SELECT * FROM employeeDetails WHERE employeeId = ?';
+    db.query(checkEmployeeQuery, [employeeId], (err, results) => {
         if (err) {
             console.error('Error querying database:', err);
             return res.status(500).json({ error: 'Database error' });
         }
-
-        if (results.length === 0) {
-            return res.status(404).json({ error: 'Employee not found' });
-        }
-
-        const employee = results[0]; 
-        const newPassword = generateRandomPassword();
-
-        const updatePasswordQuery = 'UPDATE employeeDetails SET employeePassword = ? WHERE employeeId = ?';
-        db.query(updatePasswordQuery, [newPassword, employeeId], (err, updateResult) => {
-            if (err) {
-                console.error('Error updating Password:', err);
-                return res.status(500).json({ error: 'Error updating Password' });
-            }
-
-            const mailOptions = {
-                from: 'harshit995905@gmail.com',
-                to: employee.employeeEmail,
-                subject: 'Password Reset Confirmation',
-                html: `
-                    <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
-                        <div style="max-width: 700px; margin: 40px auto; background-color: #5bb450">
-                            <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
-                                <div style="background-color: #5bb450; padding: 20px; border-radius: 8px 8px 0 0;">
-                                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;text-align: center; font-weight: bold">
-                                        Password Reset Confirmation
-                                    </h1>
-                                </div>
-                                <div style="padding: 20px; color: #333333; text-align: left;">
-                                    <p style="line-height: 1.6;">Dear ${employee.employeeName},</p>
-                                    <p style="line-height: 1.6;">Your password has been reset successfully.</p>
-                                    <p style="line-height: 1.6; margin: 0;">Your new password is: <strong>${newPassword}</strong></p>
-                                    <p style="line-height: 1.6; margin-top: 20px;">Please log in and change your password.</p>
-                                    <p style="line-height: 1.6;">Best regards,</p>
-                                    <p style="line-height: 1.0;"><strong>VEMS Support Team</strong></P>
-                                    <p style="line-height: 1.0;">Contact No: 74166 33125</p>
-                                    <p style="line-height: 1.0;">Email ID: vems-support@gmail.com</p>
-                                </div>
-                                <div style="padding: 20px; text-align: center; color: #aaaaaa; font-size: 12px;">
-                                    <p>&copy; Copyright VTS Enterprises India Private Ltd, 2016</p>
-                                </div>
-                            </div>
-                        </div>
-                    </body>
-                `,
-            };
-
-            transporter.sendMail(mailOptions, (error, info) => {
-                if (error) {
-                    console.error('Error sending Email:', error);
-                    return res.status(500).json({ error: 'Failed to send Email' });
-                } else {
-                    console.log('Email sent:', info.response);
-                    res.status(200).json({ message: 'Password reset successfully and Email sent' });
+        if (results.length > 0) {
+            const employee = results[0]; 
+            const newPassword = generateRandomPassword();
+            const updatePasswordQuery = 'UPDATE employeeDetails SET employeePassword = ? WHERE employeeId = ?';
+            db.query(updatePasswordQuery, [newPassword, employeeId], (err, updateResult) => {
+                if (err) {
+                    console.error('Error updating Password:', err);
+                    return res.status(500).json({ error: 'Error updating Password' });
                 }
-            });
-        });
+                else{
+                    forgotPasswordMail(employee, newPassword)
+                    res.send('Password updated successfully')
+                }
+        })
+        }
+        else{
+            res.send('No employee found')
+        }
     });
 });
 
 //change password
-route.post('/change-password', (req, res) => {
+router.post('/changePassword', (req, res) => {
     const { employeeId, oldPassword, newPassword } = req.body;
     
     const query = 'SELECT employeePassword FROM employeeDetails WHERE employeeId = ?';   
@@ -451,14 +372,14 @@ route.post('/change-password', (req, res) => {
                     }
                 });
             } else {
-                res.status(401).send('Incorrect password');
+                res.status(401).send('Incorrect old password');
             }
         }
     });
 });
 
 //show all employee details
-route.get('/showemployee', (req, res) => {
+router.get('/showEmployee', (req, res) => {
     const query = "SELECT * FROM employeeDetails";
     db.query(query, (err, result) => {
         if (err) return res.status(500).send(err);
@@ -467,7 +388,7 @@ route.get('/showemployee', (req, res) => {
 });
 
 //show employee by id
-route.get('/showemployee/:empId', (req,res) => {
+router.get('/showEmployee/:empId', (req,res) => {
     const empId = req.params.empId;
     const query = "SELECT * FROM employeeDetails where employeeId = ?";
     db.query(query, empId, (err, result) => {
@@ -477,7 +398,7 @@ route.get('/showemployee/:empId', (req,res) => {
 });
 
 //update employee by id
-route.post('/updateemployee/:empId', upload.single('employeeImage'), (req, res) => {
+router.post('/updateEmployee/:empId', upload.single('employeeImage'), (req, res) => {
     const empId = req.params.empId;
     const { 
         employeeName, 
@@ -583,7 +504,7 @@ route.post('/updateemployee/:empId', upload.single('employeeImage'), (req, res) 
 });
 
 //delete employee by id
-route.post('/deleteemployee/:empId', (req, res) => {
+router.post('/deleteEmployee/:empId', (req, res) => {
     const empId = req.params.empId;
     const query = "DELETE FROM employeeDetails WHERE employeeId = ?";
     db.query(query, empId, (err, result) => {
@@ -592,159 +513,13 @@ route.post('/deleteemployee/:empId', (req, res) => {
     })
 });
 
-//old excel upload api
-// route.post('/upload', upload.single('file'), (req, res) => {
-//     const filePath = path.join(uploadsDir, req.file.filename);
-
-//     const workbook = xlsx.readFile(filePath);
-//     const sheet_name = workbook.SheetNames[0];
-//     const sheet = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
-
-//     const createTableQuery = `
-//         CREATE TABLE IF NOT EXISTS employeeDetails (
-//             employeeId VARCHAR(100) PRIMARY KEY, 
-//             employeeName VARCHAR(200), 
-//             employeeGender VARCHAR(20), 
-//             employeeAddress VARCHAR(255),  
-//             employeeCity VARCHAR(100), 
-//             employeeLatitude VARCHAR(100), 
-//             employeeLongitude VARCHAR(100), 
-//             employeeEmail VARCHAR(100) UNIQUE, 
-//             employeeContact VARCHAR(20), 
-//             employeeEmergencyContact VARCHAR(20), 
-//             employeePassword VARCHAR(100),
-//             employeeImage VARCHAR(255)
-//         );
-//     `;
-
-//     db.query(createTableQuery, (err, result) => {
-//         if (err) throw err;
-//         console.log('Table created or already exists.');
-//     });
-
-//     sheet.forEach(row => {
-//         const employeePassword = generateRandomPassword();
-//         const query = `
-//             INSERT INTO employeeDetails 
-//             (employeeId, employeeName, employeeGender, employeeAddress, employeeCity, employeeLatitude, employeeLongitude, employeeEmail, employeeContact, employeeEmergencyContact, employeePassword, employeeImage) 
-//             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-//             ON DUPLICATE KEY UPDATE 
-//             employeeName = VALUES(employeeName),
-//             employeeGender = VALUES(employeeGender),
-//             employeeAddress = VALUES(employeeAddress),
-//             employeeCity = VALUES(employeeCity),
-//             employeeLatitude = VALUES(employeeLatitude),
-//             employeeLongitude = VALUES(employeeLongitude),
-//             employeeEmail = VALUES(employeeEmail),
-//             employeeContact = VALUES(employeeContact),
-//             employeeEmergencyContact = VALUES(employeeEmergencyContact),
-//             employeePassword = VALUES(employeePassword),
-//             employeeImage = VALUES(employeeImage)
-//         `;
-
-//         const values = [
-//             row.employeeId,
-//             row.employeeName,
-//             row.employeeGender,
-//             row.employeeAddress,
-//             row.employeeCity,
-//             row.employeeLatitude,
-//             row.employeeLongitude,
-//             row.employeeEmail,
-//             row.employeeContact,
-//             row.employeeEmergencyContact,
-//             employeePassword,
-//             row.employeeImage
-//         ];
-
-//         db.query(query, values, (err, result) => {
-//             if (err) {
-//                 console.error('Error inserting data into MySQL:', err);
-//             } else {
-//                 console.log('Data inserted/updated successfully.');
-
-//                 const mailOptions = {
-//                     from: 'harshit995905@gmail.com',
-//                     to: row.employeeEmail,
-//                     subject: 'Registration Confirmation - Account Details',
-//                     html:`<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
-//                             <div style="max-width: 700px; margin: 40px auto; background-color: #5bb450">
-//                                 <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
-                                    
-//                                     <div style="background-color: #5bb450; padding: 20px; border-radius: 8px 8px 0 0;">
-//                                     <h1 style="color: #ffffff; margin: 0; font-size: 24px;text-align: center; font-weight: bold">Registration Confirmation</h1>
-//                                     </div>
-                                    
-//                                     <div style="padding: 20px; color: #333333; text-align: left;">
-//                                         <p style="line-height: 1.6;">Dear ${row.employeeName},</p>
-//                                         <p style="line-height: 1.6;">We are pleased to inform you that your employee details have been successfully updated in our records.</p>
-//                                         <p style="line-height: 1.6;">Here are your account details:</p>
-//                                         <p style="line-height: 1.6; margin: 0;"><strong>Employee ID:</strong> ${row.employeeId}</p>
-//                                         <p style="line-height: 1.6; margin: 0;"><strong>Password:</strong> ${employeePassword}</p>
-//                                         <p style="line-height: 1.6; margin-top: 20px;">Please ensure to change your password after logging in for the first time.</p>
-//                                         <p style="line-height: 1.6;">Best regards,</p>
-//                                         <p style="line-height: 1.0;"><strong>VEMS Support Team</strong></P>
-//                                         <p style="line-height: 1.0;">Contact No: 74166 33125</p>
-//                                         <p style="line-height: 1.0;">Email ID: vems-support@gmail.com</p>
-//                                     </div>
-                                    
-//                                     <div style="padding: 20px; text-align: center; color: #aaaaaa; font-size: 12px;">
-//                                     <p>&copy; Copyright VTS Enterprises India Private Ltd, 2016</p>
-//                                     </div>
-                                    
-//                                 </div>
-//                             </div>
-//                         </body>`,
-//                 };
-
-//                 transporter.sendMail(mailOptions, (error, info) => {
-//                     if (error) {
-//                         console.error('Error sending Email:', error);
-//                     } else {
-//                         console.log('Email sent:', info.response);
-//                     }
-//                 console.log(row.employeeId, row.employeeEmail);
-//                 });
-//             }
-//         });
-//     });
-
-//     //Clean file after processing
-//     fs.unlink(filePath, (err) => {
-//         if (err) {
-//             console.error('Error deleting the file:', err);
-//         } else {
-//             console.log('Uploaded file deleted.');
-//         }
-//     });
-
-//     res.send('File uploaded and processed successfully.');
-// });
-
-
-
-// //feedback
-// route.post('/feedback', (req, res) => {
-//     const {employeeId, employeeName, DriverId, DriverName, Review, Rating, IncidentHappened} = req.body;
-//     const tablequery = "CREATE TABLE IF NOT EXISTS EM_Feedback( employeeId varchar(255), employeeName varchar(255), DriverId varchar(255), DriverName varchar(255), Review text default null, Rating float default null, IncidentHappened text );";
-//     db.query(tablequery);
-//     const query = "INSERT INTO EM_Feedback values (?,?,?,?,?,?,?)";
-//     db.query(query, [employeeId, employeeName, DriverId, DriverName, Review, Rating, IncidentHappened], (err,result)=>{
-//         if(err) return res.status(500).send(err);
-//         res.send({ message: 'Feedback submitted successfully!' });
-//     });
-// });
-
-
-
-// API to handle trip creation/update
-
-route.post('/trips', (req, res) => {
+//create trip request
+router.post('/trips', (req, res) => {
     const { employeeId, date, inTime, outTime } = req.body;
 
     const createTripsTable = `
-        CREATE TABLE IF NOT EXISTS Trips (
-            id VARCHAR(6) PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS cabBookingTable   (
+            bookingId VARCHAR(6) PRIMARY KEY,
             employeeId VARCHAR(255) NOT NULL,
             date DATE NOT NULL,
             inTime TIME NULL,
@@ -824,8 +599,8 @@ route.post('/trips', (req, res) => {
     });
 });
 
-// Combined API to cancel and delete trip if necessary
-route.post('/canceltrip/:tripId', (req, res) => {
+// Cancel and delete trip request if necessary
+router.post('/canceltrip/:tripId', (req, res) => {
     const { tripId } = req.params;
     const { inTime, outTime } = req.body;
     console.log("canceltrip", inTime, outTime, req.body)
@@ -875,17 +650,9 @@ route.post('/canceltrip/:tripId', (req, res) => {
     });
   });
 
-//show all trip request details
-route.get('/showtrips', (req, res) => {
-    const query = "SELECT * FROM trips";
-    db.query(query, (err, result) => {
-        if (err) return res.status(500).send(err);
-        res.send(result);
-    })
-});
 
 //show trip request by id
-route.get('/showtrips/:empId', (req,res) => {
+router.get('/showtrips/:empId', (req,res) => {
     const empId = req.params.empId;
     const query = "SELECT * FROM trips where employeeId = ?";
     db.query(query, empId, (err, result) => {
@@ -894,4 +661,4 @@ route.get('/showtrips/:empId', (req,res) => {
     })
 });
 
-module.exports = route;
+module.exports = router;
