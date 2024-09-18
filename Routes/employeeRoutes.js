@@ -12,6 +12,7 @@ const cloudinary = require('cloudinary').v2;
 const async = require('async');
 const registerationMail = require('../mailService/registerationMail');
 const forgotPasswordMail = require('../mailService/forgotPasswordMail');
+const queries = require('../SQL/Queries.json')
 
 // Cloudinary configuration
 cloudinary.config({
@@ -53,22 +54,7 @@ router.post('/upload', upload.single('file'), (req, res) => {
     const sheet = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
 
     // Create the employeeDetails table if it doesn't exist
-    const createTableQuery = `
-        CREATE TABLE IF NOT EXISTS employeeDetails (
-            employeeId VARCHAR(100) PRIMARY KEY, 
-            employeeName VARCHAR(200), 
-            employeeGender VARCHAR(20), 
-            employeeAddress VARCHAR(255),  
-            employeeCity VARCHAR(100), 
-            employeeLatitude VARCHAR(100), 
-            employeeLongitude VARCHAR(100), 
-            employeeEmail VARCHAR(100), 
-            employeeContact VARCHAR(20), 
-            employeeEmergencyContact VARCHAR(20), 
-            employeePassword VARCHAR(100),
-            employeeImage VARCHAR(255)
-        );
-    `;
+    const createTableQuery = queries.employeeQueries.createEmployeeTable;
 
     // Create the table first
     db.query(createTableQuery, (err, result) => {
@@ -81,23 +67,7 @@ router.post('/upload', upload.single('file'), (req, res) => {
         const employeePassword = generateRandomPassword(); // Generate password once
 
         // Inserting data including the generated password
-        const query = `
-            INSERT INTO employeeDetails 
-            (employeeId, employeeName, employeeGender, employeeAddress, employeeCity, employeeLatitude, employeeLongitude, employeeEmail, employeeContact, employeeEmergencyContact, employeePassword, employeeImage) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE 
-            employeeName = VALUES(employeeName),
-            employeeGender = VALUES(employeeGender),
-            employeeAddress = VALUES(employeeAddress),
-            employeeCity = VALUES(employeeCity),
-            employeeLatitude = VALUES(employeeLatitude),
-            employeeLongitude = VALUES(employeeLongitude),
-            employeeEmail = VALUES(employeeEmail),
-            employeeContact = VALUES(employeeContact),
-            employeeEmergencyContact = VALUES(employeeEmergencyContact),
-            employeePassword = VALUES(employeePassword),
-            employeeImage = VALUES(employeeImage)
-        `;
+        const query = queries.employeeQueries.addEmployee;
 
         const values = [
             row.employeeId,
@@ -215,22 +185,7 @@ router.post('/addEmployee', upload.single('employeeImage'), (req, res) => {
         employeeContact,
         employeeEmergencyContact
     } = req.body;
-    const createTableQuery = `
-        CREATE TABLE IF NOT EXISTS employeeDetails (
-            employeeId VARCHAR(100) PRIMARY KEY, 
-            employeeName VARCHAR(200), 
-            employeeGender VARCHAR(20), 
-            employeeAddress VARCHAR(255),  
-            employeeCity VARCHAR(100), 
-            employeeLatitude VARCHAR(100), 
-            employeeLongitude VARCHAR(100), 
-            employeeEmail VARCHAR(100) UNIQUE, 
-            employeeContact VARCHAR(20), 
-            employeeEmergencyContact VARCHAR(20), 
-            employeePassword VARCHAR(100),
-            employeeImage VARCHAR(255)
-        );
-    `;
+    const createTableQuery = queries.employeeQueries.createEmployeeTable;
     db.query(createTableQuery, (err, result) => {
         if (err) throw err;
         console.log('Table created or already exists.');
@@ -247,23 +202,7 @@ router.post('/addEmployee', upload.single('employeeImage'), (req, res) => {
             const employeeImage = result.secure_url; // URL of the uploaded image
             console.log(result.secure_url);
             
-            const query = `
-                INSERT INTO employeeDetails 
-                (employeeId, employeeName, employeeGender, employeeAddress, employeeCity, employeeLatitude, employeeLongitude, employeeEmail, employeeContact, employeeEmergencyContact, employeePassword, employeeImage) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
-                employeeName = VALUES(employeeName),
-                employeeGender = VALUES(employeeGender),
-                employeeAddress = VALUES(employeeAddress),
-                employeeCity = VALUES(employeeCity),
-                employeeLatitude = VALUES(employeeLatitude),
-                employeeLongitude = VALUES(employeeLongitude),
-                employeeEmail = VALUES(employeeEmail),
-                employeeContact = VALUES(employeeContact),
-                employeeEmergencyContact = VALUES(employeeEmergencyContact),
-                employeePassword = VALUES(employeePassword),
-                employeeImage = VALUES(employeeImage)
-            `;
+            const query = queries.employeeQueries.addEmployee;
 
             const values = [
                 employeeId,
@@ -306,7 +245,7 @@ router.post('/addEmployee', upload.single('employeeImage'), (req, res) => {
 
 router.post('/login', (req, res) => {
     const { empId, password } = req.body;
-    const query = 'SELECT * FROM employeeDetails WHERE employeeId = ?';
+    const query = queries.employeeQueries.getEmployeebyId;
     db.query(query, [empId], async (err, results) => {
       if (err) return res.status(500).send(err);
       if (results.length === 0) return res.status(404).send({ message: 'User not found!' });
@@ -321,7 +260,7 @@ router.post('/login', (req, res) => {
 router.post('/resetPassword', (req, res) => {
     const { employeeId } = req.body;
 
-    const checkEmployeeQuery = 'SELECT * FROM employeeDetails WHERE employeeId = ?';
+    const checkEmployeeQuery = queries.employeeQueries.getEmployeebyId;
     db.query(checkEmployeeQuery, [employeeId], (err, results) => {
         if (err) {
             console.error('Error querying database:', err);
@@ -380,7 +319,7 @@ router.post('/changePassword', (req, res) => {
 
 //show all employee details
 router.get('/showEmployee', (req, res) => {
-    const query = "SELECT * FROM employeeDetails";
+    const query = queries.employeeQueries.getEmployees;
     db.query(query, (err, result) => {
         if (err) return res.status(500).send(err);
         res.send(result);
@@ -390,7 +329,7 @@ router.get('/showEmployee', (req, res) => {
 //show employee by id
 router.get('/showEmployee/:empId', (req,res) => {
     const empId = req.params.empId;
-    const query = "SELECT * FROM employeeDetails where employeeId = ?";
+    const query = queries.employeeQueries.getEmployeebyId;
     db.query(query, empId, (err, result) => {
         if (err) return res.status(500).send(err);
         res.send(result);
@@ -423,21 +362,7 @@ router.post('/updateEmployee/:empId', upload.single('employeeImage'), (req, res)
 
             const employeeImage = result.secure_url;
 
-            const query = `
-                UPDATE employeeDetails 
-                SET 
-                    employeeName = ?, 
-                    employeeGender = ?, 
-                    employeeAddress = ?, 
-                    employeeCity = ?, 
-                    employeeLatitude = ?, 
-                    employeeLongitude = ?, 
-                    employeeContact = ?, 
-                    employeeEmergencyContact = ?,
-                    employeePassword = ?,
-                    employeeImage = ?
-                WHERE employeeId = ?
-            `;
+            const query = queries.employeeQueries.updateEmployeeDetails;
 
             const values = [
                 employeeName, 
@@ -464,20 +389,7 @@ router.post('/updateEmployee/:empId', upload.single('employeeImage'), (req, res)
         });
     } else {
         // If no image file is provided, update employee data without changing the image
-        const query = `
-            UPDATE employeeDetails 
-            SET 
-                employeeName = ?, 
-                employeeGender = ?, 
-                employeeAddress = ?, 
-                employeeCity = ?, 
-                employeeLatitude = ?, 
-                employeeLongitude = ?, 
-                employeeContact = ?, 
-                employeeEmergencyContact = ?,
-                employeePassword = ?
-            WHERE employeeId = ?
-        `;
+        const query = queries.employeeQueries.updateEmployeeDetails;
 
         const values = [
             employeeName, 
@@ -506,7 +418,7 @@ router.post('/updateEmployee/:empId', upload.single('employeeImage'), (req, res)
 //delete employee by id
 router.post('/deleteEmployee/:empId', (req, res) => {
     const empId = req.params.empId;
-    const query = "DELETE FROM employeeDetails WHERE employeeId = ?";
+    const query = queries.employeeQueries.deleteEmployee;
     db.query(query, empId, (err, result) => {
         if (err) return res.status(500).send(err);
         res.send({ message: 'Employee Deleted successfully!' });
@@ -515,19 +427,9 @@ router.post('/deleteEmployee/:empId', (req, res) => {
 
 //create trip request
 router.post('/trips', (req, res) => {
-    const { employeeId, date, inTime, outTime } = req.body;
+    const { employeeId, bookingDate, inTime, outTime } = req.body;
 
-    const createTripsTable = `
-        CREATE TABLE IF NOT EXISTS cabBookingTable   (
-            bookingId VARCHAR(6) PRIMARY KEY,
-            employeeId VARCHAR(255) NOT NULL,
-            date DATE NOT NULL,
-            inTime TIME NULL,
-            outTime TIME NULL,
-            createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )
-    `;
+    const createTripsTable = queries.cabBookingTable.createCabBookingTable;
     
     db.query(createTripsTable, (err, result) => {
         if (err) throw err;
@@ -537,17 +439,6 @@ router.post('/trips', (req, res) => {
     if (!employeeId || !date) {
         return res.status(400).send('employeeId and date are required');
     }
-
-    const generateNextID = (lastID) => {
-        if (!lastID) {
-            return 'BK0001';
-        }
-
-        const prefix = 'BK';
-        const num = parseInt(lastID.substring(2), 10);
-        const nextNum = num + 1;
-        return prefix + nextNum.toString().padStart(4, '0');
-    };
 
     const selectQuery = `SELECT * FROM Trips WHERE employeeId = ? AND date = ?`;
 
@@ -574,30 +465,18 @@ router.post('/trips', (req, res) => {
 
         } else {
             // If no row exists, generate a new ID and insert a new row
-            const getLastIDQuery = `SELECT id FROM Trips ORDER BY id DESC LIMIT 1`;
+                const insertQuery = queries.cabBookingTable.bookCab
 
-            db.query(getLastIDQuery, (err, rows) => {
-                if (err) {
-                    console.error('Error fetching last ID:', err);
-                    return res.status(500).send('Error fetching last ID');
-                }
-
-                const lastID = rows.length > 0 ? rows[0].id : null;
-                const newID = generateNextID(lastID);
-
-                const insertQuery = `INSERT INTO Trips (id, employeeId, date, inTime, outTime) VALUES (?, ?, ?, ?, ?)`;
-
-                db.query(insertQuery, [newID, employeeId, date, inTime, outTime], (err, result) => {
+                db.query(insertQuery, [ employeeId, bookingDate, inTime, outTime], (err, result) => {
                     if (err) {
                         console.error('Error creating trip:', err);
                         return res.status(500).send('Error creating trip');
                     }
                     return res.status(200).send('Trip created successfully');
                 });
-            });
-        }
+            };
+        });
     });
-});
 
 // Cancel and delete trip request if necessary
 router.post('/canceltrip/:tripId', (req, res) => {
@@ -654,7 +533,7 @@ router.post('/canceltrip/:tripId', (req, res) => {
 //show trip request by id
 router.get('/showtrips/:empId', (req,res) => {
     const empId = req.params.empId;
-    const query = "SELECT * FROM trips where employeeId = ?";
+    const query = queries.cabBookingTable.showTripById;
     db.query(query, empId, (err, result) => {
         if (err) return res.status(500).send(err);
         res.send(result);

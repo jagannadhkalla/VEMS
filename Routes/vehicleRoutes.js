@@ -7,6 +7,7 @@ const cors = require('cors');
 const { fileURLToPath } = require('url');
 const app = express();
 const db = require('../db')
+const queries = require('../SQL/Queries.json')
 
 app.use(express.json());
 
@@ -32,8 +33,7 @@ router.post('/addVehicle', (req, res) => {
 
     const { vehicleName, vehicleType, vehicleNumber, vendorName,  insuranceNumber, mileage, yearOfManufacturing, fuelType, seatCapacity, vehicleImage } = req.body;
 
-    const query = `INSERT INTO vehicleDetails (vehicleName, vehicleType, vehicleNumber, vendorName,  insuranceNumber, mileage, yearOfManufacturing, fuelType, seatCapacity, vehicleImage) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const query = queries.vehicleQueries.addVehicle;
 
     db.query(query, [
         vehicleName, vehicleType, vehicleNumber, vendorName,  insuranceNumber, mileage, yearOfManufacturing, fuelType, seatCapacity, vehicleImage
@@ -60,8 +60,7 @@ router.post('/importVehicles', upload.single('file'), (req, res) => {
         const sheetName = workbook.SheetNames[0];
         const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-        const query = `INSERT INTO vehicleDetails (vehicleName, vehicleType, vehicleNumber, vendorName, insuranceNumber, mileage, yearOfManufacturing, fuelType, seatCapacity, vehicleImage) 
-                       VALUES ?`;
+        const query = queries.vehicleQueries.addvehicles;
 
         const values = sheetData.map(row => [
             row.vehicleName, 
@@ -96,7 +95,7 @@ router.post('/importVehicles', upload.single('file'), (req, res) => {
 });
 
 router.get('/vehicles', (req, res) => {
-    const query = `SELECT * FROM vehicleDetails`;
+    const query = queries.vehicleQueries.getVehicles;
     // const query  = `SELECT v.*, d.* FROM Vehicle_Details v LEFT JOIN driverDetails d ON v.vehicleId = d.vehicleId `;
     db.query(query, (err, results) => {
         if (err) {
@@ -112,7 +111,7 @@ router.get('/vehicles', (req, res) => {
 router.get('/vehicle/:vehicleId', (req, res) => {
     const vehicleId = req.params.vehicleId;
 
-    const query = `SELECT v.*, d.* FROM vehicleDetails v LEFT JOIN driverDetails d ON v.vehicleId = d.vehicleId WHERE v.vehicleId = ? `
+    const query = queries.vehicleQueries.getVehicleById
     
     db.query(query, [vehicleId], (err, result) => {
         if (err) {
@@ -129,7 +128,7 @@ router.get('/vehicle/:vehicleId', (req, res) => {
 router.delete('/deleteVehicle/:vehicleId', (req, res) => {
     const { vehicleId } = req.params;
 
-    const query = `DELETE FROM vehicleDetails WHERE vehicleId = ?`;
+    const query = queries.vehicleQueries.deleteVehicle;
 
     db.query(query, [vehicleId], (err, result) => {
         if (err) {
@@ -162,18 +161,7 @@ router.put('/updateVehicle/:vehicleId', (req, res) => {
         vehicleImage
     } = req.body;
 
-    const query = `UPDATE vehicleDetails SET 
-                    vehicleName = ?, 
-                    vehicleType = ?, 
-                    vehicleNumber = ?, 
-                    vendorName = ?, 
-                    insuranceNumber = ?, 
-                    mileage = ?, 
-                    year_of_manufacturing = ?, 
-                    fuelType = ?, 
-                    seatCapacity = ?, 
-                    vehicleImage = ? 
-                   WHERE vehicleId = ?`;
+    const query = queries.vehicleQueries.updateVehicle;
 
     db.query(query, [
         vehicleName,
