@@ -426,7 +426,7 @@ router.post('/deleteEmployee/:empId', (req, res) => {
 });
 
 //create trip request
-router.post('/trips', (req, res) => {
+router.post('/bookCab', (req, res) => {
     const { employeeId, bookingDate, inTime, outTime } = req.body;
 
     const createTripsTable = queries.cabBookingTable.createCabBookingTable;
