@@ -17,7 +17,7 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Benny@7173',
+    password: 'root',
     database: 'vems'
 });
 
@@ -42,7 +42,7 @@ app.get('/test-cors', (req, res) => {
 
 const upload = multer({ dest: 'uploads/' });
 
-// POST API to add vehicle details
+
 app.post('/add-vehicle', (req, res) => {
     console.log('Request body:', req.body);
 
@@ -68,48 +68,57 @@ app.post('/add-vehicle', (req, res) => {
     });
 });
 
-// POST API to add vehicle details from excel
+
 app.post('/import-vehicles', upload.single('file'), (req, res) => {
+    console.log(req.file); 
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
     const filePath = req.file.path;
-    const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    
+    try {
+        const workbook = xlsx.readFile(filePath);
+        const sheetName = workbook.SheetNames[0];
+        const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-    const query = `INSERT INTO Vehicle_Details1 (vehicleName, vehicleType, vehicleNumber, vendorName, insuranceNumber, mileage, yearOfManufacturing,  fuelType, seatCapacity, vehicleImage) 
-                   VALUES ?`;
+        const query = `INSERT INTO Vehicle_Details1 (vehicleName, vehicleType, vehicleNumber, vendorName, insuranceNumber, mileage, yearOfManufacturing, fuelType, seatCapacity, vehicleImage) 
+                       VALUES ?`;
 
-    const values = sheetData.map(row => [
-        row.vehicleName, 
-        row.vehicleType, 
-        row.vehicleNumber, 
-        row.vendorName,
-        row.insuranceNumber,
-        row.mileage,
-        row.yearOfManufacturing, 
-        row.fuelType, 
-        row.seatCapacity, 
-        row.vehicleImage,
-        
-    ]);
+        const values = sheetData.map(row => [
+            row.vehicleName, 
+            row.vehicleType, 
+            row.vehicleNumber, 
+            row.vendorName,
+            row.insuranceNumber,
+            row.mileage,
+            row.yearOfManufacturing, 
+            row.fuelType, 
+            row.seatCapacity, 
+            row.vehicleImage,
+        ]);
 
-    db.query(query, [values], (err, result) => {
-       
-        fs.unlink(filePath, (unlinkErr) => {
-            if (unlinkErr) {
-                console.error('Error deleting file:', unlinkErr);
+        db.query(query, [values], (err, result) => {
+            fs.unlink(filePath, (unlinkErr) => {
+                if (unlinkErr) {
+                    console.error('Error deleting file:', unlinkErr);
+                }
+            });
+
+            if (err) {
+                console.error('Error importing vehicles:', err);
+                return res.status(500).json({ error: 'Database error' });
             }
+            res.status(201).json({ message: 'Vehicles imported successfully', insertedRows: result.affectedRows });
         });
-
-        if (err) {
-            console.error('Error importing vehicles:', err);
-            return res.status(500).json({ error: 'Database error' });
-        }
-        res.status(201).json({ message: 'Vehicles imported successfully', insertedRows: result.affectedRows });
-    });
+    } catch (error) {
+        console.error('Error reading file:', error);
+        return res.status(500).json({ error: 'File processing error' });
+    }
 });
 
 
-// GET API to retrieve a list of vehicles
+
+
 app.get('/vehicles', (req, res) => {
     const query = `SELECT * FROM Vehicle_Details1`;
     // const query  = `SELECT v.*, d.* FROM Vehicle_Details v LEFT JOIN driver_details d ON v.vehicleId = d.vehicleId `;
@@ -124,7 +133,7 @@ app.get('/vehicles', (req, res) => {
     });
 });
 
-// Get vehicle details by vehicleId
+
 app.get('/vehicles/:vehicleId', (req, res) => {
     const vehicleId = req.params.vehicleId;
 
@@ -142,7 +151,6 @@ app.get('/vehicles/:vehicleId', (req, res) => {
     });
 });
 
-// DELETE API to delete a vehicle by vehicleId
 app.delete('/vehicles/:vehicleId', (req, res) => {
     const { vehicleId } = req.params;
 
@@ -162,7 +170,7 @@ app.delete('/vehicles/:vehicleId', (req, res) => {
     });
 });
 
-// PUT API to update vehicle details by vehicleId
+
 app.put('/vehicles/:vehicleId', (req, res) => {
     const { vehicleId } = req.params;
 
@@ -218,7 +226,7 @@ app.put('/vehicles/:vehicleId', (req, res) => {
     });
 });
 
-// API to post trip details
+
 app.post('/trips/book/:EmployeeId', (req, res) => {
     const { EmployeeId } = req.params; 
     const { date, shift, trip_type } = req.body;
