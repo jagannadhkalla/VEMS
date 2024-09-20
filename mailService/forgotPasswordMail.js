@@ -4,7 +4,7 @@ const transporter = require('./userMail')
 const forgotPasswordMail = ()=>{
     const mailOptions = {
         from: 'harshit995905@gmail.com',
-        to: employee.employeeEmail,
+        to: employee.EmployeeEmail,
         subject: 'Password Reset Confirmation',
         html: `
             <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
@@ -16,7 +16,7 @@ const forgotPasswordMail = ()=>{
                             </h1>
                         </div>
                         <div style="padding: 20px; color: #333333; text-align: left;">
-                            <p style="line-height: 1.6;">Dear ${employee.employeeName},</p>
+                            <p style="line-height: 1.6;">Dear ${employee.EmployeeName},</p>
                             <p style="line-height: 1.6;">Your password has been reset successfully.</p>
                             <p style="line-height: 1.6; margin: 0;">Your new password is: <strong>${newPassword}</strong></p>
                             <p style="line-height: 1.6; margin-top: 20px;">Please log in and change your password.</p>

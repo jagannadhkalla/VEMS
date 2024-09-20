@@ -4,7 +4,7 @@ const transporter = require('./userMail')
 const registerationMail = (employee)=>{
     const mailOptions = {
         from: 'harshit995905@gmail.com',
-        to: employee.employeeEmail,
+        to: employee.EmployeeEmail,
         subject: 'Registration Confirmation - Account Details',
         html:`<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
                 <div style="max-width: 700px; margin: 40px auto; background-color: #5bb450">
@@ -15,11 +15,11 @@ const registerationMail = (employee)=>{
                         </div>
                         
                         <div style="padding: 20px; color: #333333; text-align: left;">
-                            <p style="line-height: 1.6;">Dear ${employee.employeeName},</p>
+                            <p style="line-height: 1.6;">Dear ${employee.EmployeeName},</p>
                             <p style="line-height: 1.6;">We are pleased to inform you that your employee details have been successfully updated in our records.</p>
                             <p style="line-height: 1.6;">Here are your account details:</p>
-                            <p style="line-height: 1.6; margin: 0;"><strong>Employee ID:</strong> ${employee.employeeId}</p>
-                            <p style="line-height: 1.6; margin: 0;"><strong>Password:</strong> ${employee.employeePassword}</p>
+                            <p style="line-height: 1.6; margin: 0;"><strong>Employee ID:</strong> ${employee.EmployeeId}</p>
+                            <p style="line-height: 1.6; margin: 0;"><strong>Password:</strong> ${employee.EmployeePassword}</p>
                             <p style="line-height: 1.6; margin-top: 20px;">Please ensure to change your password after logging in for the first time.</p>
                             <p style="line-height: 1.6;">Best regards,</p>
                             <p style="line-height: 1.0;"><strong>VEMS Support Team</strong></P>
