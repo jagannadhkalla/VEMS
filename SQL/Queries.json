@@ -1,74 +1,43 @@
 {
-    "vendorQueries" : {
-        
-        "getVendors" : "SELECT * FROM VendorDetails",
-    
-        "getVendorById" : "SELECT * FROM VendorDetails WHERE vendorId  = ?",
-
-        "addVendor" : "INSERT INTO vendorDetails (vendorName, contactNumber, email, aadharCardUpload, address, accountHandlerName, accountNumber, bankName, IFSCCode, branchName) VALUES (?,?,?,?,?,?,?,?,?,?)",
-
-        "addVendorAgreement" : "INSERT INTO vendorAgreement (vendorId, agreementStartDate, agreementEndDate, agreementAmount, amountPaid, agreementUpload) VALUES (?,?,?,?,?,?)",
-    
-        "updateVendorTransaction" : "UPDATE vendorAgreement SET transactionStatus = 1 WHERE vendorId = ?"
-    
+    "VendorQueries": {
+        "getVendors": "SELECT * FROM VendorDetails",
+        "getVendorById": "SELECT * FROM VendorDetails WHERE VendorId = ?",
+        "addVendor": "INSERT INTO VendorDetails (VendorName, ContactNumber, Email, AadharCardUpload, Address, AccountHandlerName, AccountNumber, BankName, IFSCCode, BranchName) VALUES (?,?,?,?,?,?,?,?,?,?)",
+        "addVendorAgreement": "INSERT INTO VendorAgreement (VendorId, AgreementStartDate, AgreementEndDate, AgreementAmount, AmountPaid, AgreementUpload) VALUES (?,?,?,?,?,?)",
+        "updateVendorTransaction": "UPDATE VendorAgreement SET TransactionStatus = 1 WHERE VendorId = ?"
     },
     
-    "vehicleQueries" : {
-    
-        "getVehicles" : "SELECT * FROM vehicleDetails",
-    
-        "getVehicleById" : "SELECT * FROM vehicleDetails WHERE vehicleId = ?",
-    
-        "addVehicle" : "INSERT INTO vehicleDetails (vehicleName, vehicleNumber, vehicleMileageRange, vehicleManufacturedYear, vehicleSeatCapacity, vehicleType, vehicleImage, vehicleInsuranceNumber, vehicleFuelType, vendorName) VALUES (?,?,?,?,?,?,?,?,?,?)",
-        
-        "addvehicles" : "INSERT INTO vehicleDetails (vehicleName, vehicleNumber, vehicleMileageRange, vehicleManufacturedYear, vehicleSeatCapacity, vehicleType, vehicleImage, vehicleInsuranceNumber, vehicleFuelType, vendorName) VALUES (?)",
-
-        "deleteVehicle" : "DELETE FROM vehicleDetails WHERE vehicleId = ?",
-
-        "updateVehicle" : "UPDATE vehicleDetails SET vehicleName = ?, vehicleNumber = ?, vehicleMileageRange = ?, vehicleManufacturedYear = ?, vehicleSeatCapacity = ?, vehicleType = ?, vehicleImage = ?, vehicleInsuranceNumber = ?, vehicleFuelType = ?, vendorName = ? WHERE vehicleId = ?"
-    
+    "VehicleQueries": {
+        "getVehicles": "SELECT * FROM VehicleDetails",
+        "getVehicleById": "SELECT * FROM VehicleDetails WHERE VehicleId = ?",
+        "addVehicle": "INSERT INTO VehicleDetails (VehicleName, VehicleNumber, VehicleMileageRange, VehicleManufacturedYear, VehicleSeatCapacity, VehicleType, VehicleImage, VehicleInsuranceNumber, VehicleFuelType, VendorName) VALUES (?,?,?,?,?,?,?,?,?,?)",
+        "addVehicles": "INSERT INTO VehicleDetails (VehicleName, VehicleNumber, VehicleMileageRange, VehicleManufacturedYear, VehicleSeatCapacity, VehicleType, VehicleImage, VehicleInsuranceNumber, VehicleFuelType, VendorName) VALUES (?)",
+        "deleteVehicle": "DELETE FROM VehicleDetails WHERE VehicleId = ?",
+        "updateVehicle": "UPDATE VehicleDetails SET VehicleName = ?, VehicleNumber = ?, VehicleMileageRange = ?, VehicleManufacturedYear = ?, VehicleSeatCapacity = ?, VehicleType = ?, VehicleImage = ?, VehicleInsuranceNumber = ?, VehicleFuelType = ?, VendorName = ? WHERE VehicleId = ?"
     },
 
-    "driverQueries" : { 
-
-        "getDrivers" : "SELECT * FROM driverDetails",
-
-        "getDriverById" : "SELECT * FROM driverDetails WHERE driverId = ?",
-
-        "addDriver" : "INSERT INTO driverDetails (driverName, driverPhone, driverEmail, driverGender, driverDOB, driverAddress, driverAadhar, driverLicense, driverImage, driverExperience, leaveCount, driverTrips, vendorName) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-
-        "deleteDriver" : "DELETE FROM driverDetails WHERE driverId = ?"
-
+    "DriverQueries": {
+        "getDrivers": "SELECT * FROM DriverDetails",
+        "getDriverById": "SELECT * FROM DriverDetails WHERE DriverId = ?",
+        "addDriver": "INSERT INTO DriverDetails (DriverName, DriverPhone, DriverEmail, DriverGender, DriverDOB, DriverAddress, DriverAadhar, DriverLicense, DriverImage, DriverExperience, LeaveCount, DriverTrips, VendorName) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "deleteDriver": "DELETE FROM DriverDetails WHERE DriverId = ?"
     },
 
-    "employeeQueries" : {
-
-        "createEmployeeTable" : "CREATE TABLE IF NOT EXISTS employeeDetails (employeeId VARCHAR(100) PRIMARY KEY, employeeName VARCHAR(200), employeeGender VARCHAR(20), employeeAddress VARCHAR(255),  employeeCity VARCHAR(100), employeeLatitude VARCHAR(100), employeeLongitude VARCHAR(100), employeeEmail VARCHAR(100), employeeContact VARCHAR(20), employeeEmergencyContact VARCHAR(20), employeePassword VARCHAR(100),employeeImage VARCHAR(255))",
-        
-        "getEmployees" : "SELECT * FROM employeeDetails",
-
-        "getEmployeebyId" : "SELECT * FROM employeeDetails WHERE employeeId = ?",
-
-        "addEmployees" : "INSERT INTO employeeDetails (employeeId, employeeName, employeeAddress, employeeCity, employeeLatitude, employeeLongitude, employeeContact, employeeEmail, employeeEmergencyContact, employeeGender, employeeImage) VALUES (?)",
-
-        "addEmployee" : "INSERT INTO employeeDetails (employeeId, employeeName, employeeAddress, employeeCity, employeeLatitude, employeeLongitude, employeeContact, employeeEmail, employeeEmergencyContact, employeeGender, employeeImage) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-
-        "updateEmployeeDetails" : "UPDATE employeeDetails SET employeeName = ?, employeeGender = ?, employeeAddress = ?, employeeCity = ?, employeeLatitude = ?, employeeLongitude = ?, employeeContact = ?, employeeEmergencyContact = ?, employeePassword = ?, employeeImage = ? WHERE employeeId = ?",
-
-        "updatePassword" : "UPDATE employeeDetails SET employeePassword = ? WHERE employeeId = ?",
-        
-        "bookCab" : "INSERT INTO cabBookingTable(employeeId, bookingDate, inTime, outTime) VALUES (?, ?, ?, ?)",
-
-        "deleteEmployee" : "DELETE FROM employeeDetails WHERE employeeId = ?"
-
+    "EmployeeQueries": {
+        "createEmployeeTable": "CREATE TABLE IF NOT EXISTS EmployeeDetails (EmployeeId VARCHAR(100) PRIMARY KEY, EmployeeName VARCHAR(200), EmployeeGender VARCHAR(20), EmployeeAddress VARCHAR(255), EmployeeCity VARCHAR(100), EmployeeLatitude VARCHAR(100), EmployeeLongitude VARCHAR(100), EmployeeEmail VARCHAR(100), EmployeeContact VARCHAR(20), EmployeeEmergencyContact VARCHAR(20), EmployeePassword VARCHAR(100), EmployeeImage VARCHAR(255))",
+        "getEmployees": "SELECT * FROM EmployeeDetails",
+        "getEmployeeById": "SELECT * FROM EmployeeDetails WHERE EmployeeId = ?",
+        "addEmployees": "INSERT INTO EmployeeDetails (EmployeeId, EmployeeName, EmployeeAddress, EmployeeCity, EmployeeLatitude, EmployeeLongitude, EmployeeContact, EmployeeEmail, EmployeeEmergencyContact, EmployeeGender, EmployeeImage) VALUES (?)",
+        "addEmployee": "INSERT INTO EmployeeDetails (EmployeeId, EmployeeName, EmployeeAddress, EmployeeCity, EmployeeLatitude, EmployeeLongitude, EmployeeContact, EmployeeEmail, EmployeeEmergencyContact, EmployeeGender, EmployeeImage) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        "updateEmployeeDetails": "UPDATE EmployeeDetails SET EmployeeName = ?, EmployeeGender = ?, EmployeeAddress = ?, EmployeeCity = ?, EmployeeLatitude = ?, EmployeeLongitude = ?, EmployeeContact = ?, EmployeeEmergencyContact = ?, EmployeePassword = ?, EmployeeImage = ? WHERE EmployeeId = ?",
+        "updatePassword": "UPDATE EmployeeDetails SET EmployeePassword = ? WHERE EmployeeId = ?",
+        "bookCab": "INSERT INTO CabBookingTable(EmployeeId, BookingDate, InTime, OutTime) VALUES (?, ?, ?, ?)",
+        "deleteEmployee": "DELETE FROM EmployeeDetails WHERE EmployeeId = ?"
     },
 
-    "cabBookingTable" : {
-
-        "createCabBookingTable" : "CREATE TABLE IF NOT EXISTS cabBookingTable (bookingId varchar(255) PRIMARY KEY , employeeId varchar(255), bookingDate varchar(255), bookingTime varchar(255), inTime varchar(255), outTime varchar(255))",
-
-        "bookCab" : "INSERT INTO cabBookingTable(employeeId, bookingDate, inTime, outTime) VALUES (?, ?, ?, ?)",
-
-        "shoeTripById" : "SELECT * FROM cabBookingTable WHERE employeeId = ?"
+    "CabBookingTable": {
+        "createCabBookingTable": "CREATE TABLE IF NOT EXISTS CabBookingTable (BookingId VARCHAR(255) PRIMARY KEY, EmployeeId VARCHAR(255), BookingDate VARCHAR(255), BookingTime VARCHAR(255), InTime VARCHAR(255), OutTime VARCHAR(255))",
+        "bookCab": "INSERT INTO CabBookingTable(EmployeeId, BookingDate, InTime, OutTime) VALUES (?, ?, ?, ?)",
+        "showTripById": "SELECT * FROM CabBookingTable WHERE EmployeeId = ?"
     }
 }

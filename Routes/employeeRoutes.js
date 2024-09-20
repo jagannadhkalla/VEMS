@@ -40,12 +40,12 @@ if (!fs.existsSync(uploadsDir)) {
 // Multer for file uploads
 const upload = multer({ dest: uploadsDir });
 
-// Function to generate random employeePassword
+// Function to generate random EmployeePassword
 const generateRandomPassword = (length = 6) => {
     return crypto.randomBytes(length).toString('hex').slice(0, length);
 };
 
-// upload Excel file and add employee data
+// upload Excel file and add Employee data
 router.post('/upload', upload.single('file'), (req, res) => {
     const filePath = path.join(uploadsDir, req.file.filename);
     
@@ -53,8 +53,8 @@ router.post('/upload', upload.single('file'), (req, res) => {
     const sheet_name = workbook.SheetNames[0];
     const sheet = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
 
-    // Create the employeeDetails table if it doesn't exist
-    const createTableQuery = queries.employeeQueries.createEmployeeTable;
+    // Create the EmployeeDetails table if it doesn't exist
+    const createTableQuery = queries.EmployeeQueries.createEmployeeTable;
 
     // Create the table first
     db.query(createTableQuery, (err, result) => {
@@ -64,24 +64,24 @@ router.post('/upload', upload.single('file'), (req, res) => {
 
     // Insert data into the table immediately
     sheet.forEach(row => {
-        const employeePassword = generateRandomPassword(); // Generate password once
+        const EmployeePassword = generateRandomPassword(); // Generate password once
 
         // Inserting data including the generated password
-        const query = queries.employeeQueries.addEmployee;
+        const query = queries.EmployeeQueries.addEmployee;
 
         const values = [
-            row.employeeId,
-            row.employeeName,
-            row.employeeGender,
-            row.employeeAddress,
-            row.employeeCity,
-            row.employeeLatitude,
-            row.employeeLongitude,
-            row.employeeEmail,
-            row.employeeContact,
-            row.employeeEmergencyContact,
-            employeePassword, // Storing the generated password
-            row.employeeImage
+            row.EmployeeId,
+            row.EmployeeName,
+            row.EmployeeGender,
+            row.EmployeeAddress,
+            row.EmployeeCity,
+            row.EmployeeLatitude,
+            row.EmployeeLongitude,
+            row.EmployeeEmail,
+            row.EmployeeContact,
+            row.EmployeeEmergencyContact,
+            EmployeePassword, // Storing the generated password
+            row.EmployeeImage
         ];
 
         db.query(query, values, (err, result) => {
@@ -93,7 +93,7 @@ router.post('/upload', upload.single('file'), (req, res) => {
         });
 
         // Store the password in the row for later use in the email
-        row.employeePassword = employeePassword;
+        row.EmployeePassword = EmployeePassword;
     });
 
     // Send response to frontend after data is inserted
@@ -103,7 +103,7 @@ router.post('/upload', upload.single('file'), (req, res) => {
     const emailQueue = async.queue((row, callback) => {
         const mailOptions = {
             from: 'harshit995905@gmail.com',
-            to: row.employeeEmail,
+            to: row.EmployeeEmail,
             subject: 'Registration Confirmation - Account Details',
             html:`<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
                             <div style="max-width: 700px; margin: 40px auto; background-color: #5bb450">
@@ -114,11 +114,11 @@ router.post('/upload', upload.single('file'), (req, res) => {
                                     </div>
                                     
                                     <div style="padding: 20px; color: #333333; text-align: left;">
-                                        <p style="line-height: 1.6;">Dear ${row.employeeName},</p>
-                                        <p style="line-height: 1.6;">We are pleased to inform you that your employee details have been successfully updated in our records.</p>
+                                        <p style="line-height: 1.6;">Dear ${row.EmployeeName},</p>
+                                        <p style="line-height: 1.6;">We are pleased to inform you that your Employee details have been successfully updated in our records.</p>
                                         <p style="line-height: 1.6;">Here are your account details:</p>
-                                        <p style="line-height: 1.6; margin: 0;"><strong>Employee ID:</strong> ${row.employeeId}</p>
-                                        <p style="line-height: 1.6; margin: 0;"><strong>Password:</strong> ${row.employeePassword}</p>
+                                        <p style="line-height: 1.6; margin: 0;"><strong>Employee ID:</strong> ${row.EmployeeId}</p>
+                                        <p style="line-height: 1.6; margin: 0;"><strong>Password:</strong> ${row.EmployeePassword}</p>
                                         <p style="line-height: 1.6; margin-top: 20px;">Please ensure to change your password after logging in for the first time.</p>
                                         <p style="line-height: 1.6;">Best regards,</p>
                                         <p style="line-height: 1.0;"><strong>VEMS Support Team</strong></P>
@@ -150,9 +150,9 @@ router.post('/upload', upload.single('file'), (req, res) => {
     sheet.forEach(row => {
         emailQueue.push(row, (err) => {
             if (err) {
-                console.error('Error processing email for:', row.employeeId, row.employeeEmail, err);
+                console.error('Error processing email for:', row.EmployeeId, row.EmployeeEmail, err);
             } else {
-                console.log('Email processed for:',  row.employeeId, row.employeeEmail);
+                console.log('Email processed for:',  row.EmployeeId, row.EmployeeEmail);
             }
         });
     });
@@ -171,26 +171,26 @@ router.post('/upload', upload.single('file'), (req, res) => {
     });
 });
 
-// add employee with cloudinary image upload
-router.post('/addEmployee', upload.single('employeeImage'), (req, res) => {
+// add Employee with cloudinary image upload
+router.post('/addEmployee', upload.single('EmployeeImage'), (req, res) => {
     const {
-        employeeId,
-        employeeName,
-        employeeGender,
-        employeeAddress,
-        employeeCity,
-        employeeLatitude,
-        employeeLongitude,
-        employeeEmail,
-        employeeContact,
-        employeeEmergencyContact
+        EmployeeId,
+        EmployeeName,
+        EmployeeGender,
+        EmployeeAddress,
+        EmployeeCity,
+        EmployeeLatitude,
+        EmployeeLongitude,
+        EmployeeEmail,
+        EmployeeContact,
+        EmployeeEmergencyContact
     } = req.body;
-    const createTableQuery = queries.employeeQueries.createEmployeeTable;
+    const createTableQuery = queries.EmployeeQueries.createEmployeeTable;
     db.query(createTableQuery, (err, result) => {
         if (err) throw err;
         console.log('Table created or already exists.');
     });
-    const employeePassword = generateRandomPassword();
+    const EmployeePassword = generateRandomPassword();
     if (req.file) {
         const filePath = req.file.path;
 
@@ -199,24 +199,24 @@ router.post('/addEmployee', upload.single('employeeImage'), (req, res) => {
                 console.error('Error uploading to Cloudinary:', err);
                 return res.status(500).send('Cloudinary upload failed');
             }
-            const employeeImage = result.secure_url; // URL of the uploaded image
+            const EmployeeImage = result.secure_url; // URL of the uploaded image
             console.log(result.secure_url);
             
-            const query = queries.employeeQueries.addEmployee;
+            const query = queries.EmployeeQueries.addEmployee;
 
             const values = [
-                employeeId,
-                employeeName,
-                employeeGender,
-                employeeAddress,
-                employeeCity,
-                employeeLatitude,
-                employeeLongitude,
-                employeeEmail,
-                employeeContact,
-                employeeEmergencyContact,
-                employeePassword,
-                employeeImage
+                EmployeeId,
+                EmployeeName,
+                EmployeeGender,
+                EmployeeAddress,
+                EmployeeCity,
+                EmployeeLatitude,
+                EmployeeLongitude,
+                EmployeeEmail,
+                EmployeeContact,
+                EmployeeEmergencyContact,
+                EmployeePassword,
+                EmployeeImage
             ];
 
             db.query(query, values, (err, result) => {
@@ -225,8 +225,8 @@ router.post('/addEmployee', upload.single('employeeImage'), (req, res) => {
                     res.status(500).send('Error inserting data');
                 } else {
                     console.log('Data inserted/updated successfully.');
-                    const query1 = 'SELECT * FROM employeeDetails WHERE employeeEmail = ?'
-                    db.query(query1, employeeEmail, (err1, result1)=>{
+                    const query1 = 'SELECT * FROM EmployeeDetails WHERE EmployeeEmail = ?'
+                    db.query(query1, EmployeeEmail, (err1, result1)=>{
                         if(err1){
                             console.log(err1)
                             res.send(err1)
@@ -245,64 +245,64 @@ router.post('/addEmployee', upload.single('employeeImage'), (req, res) => {
 
 router.post('/login', (req, res) => {
     const { empId, password } = req.body;
-    const query = queries.employeeQueries.getEmployeebyId;
+    const query = queries.EmployeeQueries.getEmployeebyId;
     db.query(query, [empId], async (err, results) => {
       if (err) return res.status(500).send(err);
       if (results.length === 0) return res.status(404).send({ message: 'User not found!' });
       
       const user = results[0];
-      const isValidPassword = (user.employeePassword === password);
+      const isValidPassword = (user.EmployeePassword === password);
       if (!isValidPassword) return res.status(401).send({ message: 'Invalid Password!'});
-      res.send({ message: 'Login successful!', id: user.employeeId});
+      res.send({ message: 'Login successful!', id: user.EmployeeId});
     });
 });
 
 router.post('/resetPassword', (req, res) => {
-    const { employeeId } = req.body;
+    const { EmployeeId } = req.body;
 
-    const checkEmployeeQuery = queries.employeeQueries.getEmployeebyId;
-    db.query(checkEmployeeQuery, [employeeId], (err, results) => {
+    const checkEmployeeQuery = queries.EmployeeQueries.getEmployeebyId;
+    db.query(checkEmployeeQuery, [EmployeeId], (err, results) => {
         if (err) {
             console.error('Error querying database:', err);
             return res.status(500).json({ error: 'Database error' });
         }
         if (results.length > 0) {
-            const employee = results[0]; 
+            const Employee = results[0]; 
             const newPassword = generateRandomPassword();
-            const updatePasswordQuery = 'UPDATE employeeDetails SET employeePassword = ? WHERE employeeId = ?';
-            db.query(updatePasswordQuery, [newPassword, employeeId], (err, updateResult) => {
+            const updatePasswordQuery = 'UPDATE EmployeeDetails SET EmployeePassword = ? WHERE EmployeeId = ?';
+            db.query(updatePasswordQuery, [newPassword, EmployeeId], (err, updateResult) => {
                 if (err) {
                     console.error('Error updating Password:', err);
                     return res.status(500).json({ error: 'Error updating Password' });
                 }
                 else{
-                    forgotPasswordMail(employee, newPassword)
+                    forgotPasswordMail(Employee, newPassword)
                     res.send('Password updated successfully')
                 }
         })
         }
         else{
-            res.send('No employee found')
+            res.send('No Employee found')
         }
     });
 });
 
 //change password
 router.post('/changePassword', (req, res) => {
-    const { employeeId, oldPassword, newPassword } = req.body;
+    const { EmployeeId, oldPassword, newPassword } = req.body;
     
-    const query = 'SELECT employeePassword FROM employeeDetails WHERE employeeId = ?';   
-    db.query(query, [employeeId], (err, results) => {
+    const query = 'SELECT EmployeePassword FROM EmployeeDetails WHERE EmployeeId = ?';   
+    db.query(query, [EmployeeId], (err, results) => {
         if (err) {
             console.error('Error fetching data from MySQL:', err);
             res.status(500).send('Server error');
         } else if (results.length === 0) {
             res.status(404).send('Employee not found');
         } else {
-            const dbPassword = results[0].employeePassword;
+            const dbPassword = results[0].EmployeePassword;
             if (dbPassword === oldPassword) {
-                const updateQuery = 'UPDATE employeeDetails SET employeePassword = ? WHERE employeeId = ?';
-                db.query(updateQuery, [newPassword, employeeId], (err, result) => {
+                const updateQuery = 'UPDATE EmployeeDetails SET EmployeePassword = ? WHERE EmployeeId = ?';
+                db.query(updateQuery, [newPassword, EmployeeId], (err, result) => {
                     if (err) {
                         console.error('Error updating password in MySQL:', err);
                         res.status(500).send('Error updating password');
@@ -317,38 +317,38 @@ router.post('/changePassword', (req, res) => {
     });
 });
 
-//show all employee details
+//show all Employee details
 router.get('/showEmployee', (req, res) => {
-    const query = queries.employeeQueries.getEmployees;
+    const query = queries.EmployeeQueries.getEmployees;
     db.query(query, (err, result) => {
         if (err) return res.status(500).send(err);
         res.send(result);
     })
 });
 
-//show employee by id
+//show Employee by id
 router.get('/showEmployee/:empId', (req,res) => {
     const empId = req.params.empId;
-    const query = queries.employeeQueries.getEmployeebyId;
+    const query = queries.EmployeeQueries.getEmployeebyId;
     db.query(query, empId, (err, result) => {
         if (err) return res.status(500).send(err);
         res.send(result);
     })
 });
 
-//update employee by id
-router.post('/updateEmployee/:empId', upload.single('employeeImage'), (req, res) => {
+//update Employee by id
+router.post('/updateEmployee/:empId', upload.single('EmployeeImage'), (req, res) => {
     const empId = req.params.empId;
     const { 
-        employeeName, 
-        employeeGender, 
-        employeeAddress, 
-        employeeCity, 
-        employeeLatitude, 
-        employeeLongitude, 
-        employeeContact, 
-        employeeEmergencyContact,
-        employeePassword
+        EmployeeName, 
+        EmployeeGender, 
+        EmployeeAddress, 
+        EmployeeCity, 
+        EmployeeLatitude, 
+        EmployeeLongitude, 
+        EmployeeContact, 
+        EmployeeEmergencyContact,
+        EmployeePassword
     } = req.body;
 
     // Upload image to Cloudinary if file is provided
@@ -360,27 +360,27 @@ router.post('/updateEmployee/:empId', upload.single('employeeImage'), (req, res)
                 return res.status(500).send('Cloudinary upload failed');
             }
 
-            const employeeImage = result.secure_url;
+            const EmployeeImage = result.secure_url;
 
-            const query = queries.employeeQueries.updateEmployeeDetails;
+            const query = queries.EmployeeQueries.updateEmployeeDetails;
 
             const values = [
-                employeeName, 
-                employeeGender, 
-                employeeAddress, 
-                employeeCity, 
-                employeeLatitude, 
-                employeeLongitude, 
-                employeeContact, 
-                employeeEmergencyContact,
-                employeePassword || null,
-                employeeImage,
+                EmployeeName, 
+                EmployeeGender, 
+                EmployeeAddress, 
+                EmployeeCity, 
+                EmployeeLatitude, 
+                EmployeeLongitude, 
+                EmployeeContact, 
+                EmployeeEmergencyContact,
+                EmployeePassword || null,
+                EmployeeImage,
                 empId
             ];
 
             db.query(query, values, (err, result) => {
                 if (err) {
-                    console.error('Error updating employee details:', err);
+                    console.error('Error updating Employee details:', err);
                     return res.status(500).send('Database update failed');
                 }
 
@@ -388,25 +388,25 @@ router.post('/updateEmployee/:empId', upload.single('employeeImage'), (req, res)
             });
         });
     } else {
-        // If no image file is provided, update employee data without changing the image
-        const query = queries.employeeQueries.updateEmployeeDetails;
+        // If no image file is provided, update Employee data without changing the image
+        const query = queries.EmployeeQueries.updateEmployeeDetails;
 
         const values = [
-            employeeName, 
-            employeeGender, 
-            employeeAddress, 
-            employeeCity, 
-            employeeLatitude, 
-            employeeLongitude, 
-            employeeContact, 
-            employeeEmergencyContact,
-            employeePassword || null,
+            EmployeeName, 
+            EmployeeGender, 
+            EmployeeAddress, 
+            EmployeeCity, 
+            EmployeeLatitude, 
+            EmployeeLongitude, 
+            EmployeeContact, 
+            EmployeeEmergencyContact,
+            EmployeePassword || null,
             empId
         ];
 
         db.query(query, values, (err, result) => {
             if (err) {
-                console.error('Error updating employee details:', err);
+                console.error('Error updating Employee details:', err);
                 return res.status(500).send('Database update failed');
             }
 
@@ -415,10 +415,10 @@ router.post('/updateEmployee/:empId', upload.single('employeeImage'), (req, res)
     }
 });
 
-//delete employee by id
+//delete Employee by id
 router.post('/deleteEmployee/:empId', (req, res) => {
     const empId = req.params.empId;
-    const query = queries.employeeQueries.deleteEmployee;
+    const query = queries.EmployeeQueries.deleteEmployee;
     db.query(query, empId, (err, result) => {
         if (err) return res.status(500).send(err);
         res.send({ message: 'Employee Deleted successfully!' });
@@ -427,7 +427,7 @@ router.post('/deleteEmployee/:empId', (req, res) => {
 
 //create trip request
 router.post('/bookCab', (req, res) => {
-    const { employeeId, bookingDate, inTime, outTime } = req.body;
+    const { EmployeeId, bookingDate, inTime, outTime } = req.body;
 
     const createTripsTable = queries.cabBookingTable.createCabBookingTable;
     
@@ -436,13 +436,13 @@ router.post('/bookCab', (req, res) => {
         console.log('Trips table created/exists!');
     });
 
-    if (!employeeId || !date) {
-        return res.status(400).send('employeeId and date are required');
+    if (!EmployeeId || !date) {
+        return res.status(400).send('EmployeeId and date are required');
     }
 
-    const selectQuery = `SELECT * FROM Trips WHERE employeeId = ? AND date = ?`;
+    const selectQuery = `SELECT * FROM Trips WHERE EmployeeId = ? AND date = ?`;
 
-    db.query(selectQuery, [employeeId, date], (err, results) => {
+    db.query(selectQuery, [EmployeeId, date], (err, results) => {
         if (err) {
             console.error('Error fetching trip data:', err);
             return res.status(500).send('Error fetching trip data');
@@ -453,9 +453,9 @@ router.post('/bookCab', (req, res) => {
             const updatedInTime = inTime ? inTime : existingTrip.inTime;
             const updatedOutTime = outTime ? outTime : existingTrip.outTime;
 
-            const updateQuery = `UPDATE Trips SET inTime = ?, outTime = ? WHERE employeeId = ? AND date = ?`;
+            const updateQuery = `UPDATE Trips SET inTime = ?, outTime = ? WHERE EmployeeId = ? AND date = ?`;
 
-            db.query(updateQuery, [updatedInTime, updatedOutTime, employeeId, date], (err, result) => {
+            db.query(updateQuery, [updatedInTime, updatedOutTime, EmployeeId, date], (err, result) => {
                 if (err) {
                     console.error('Error updating trip:', err);
                     return res.status(500).send('Error updating trip');
@@ -467,7 +467,7 @@ router.post('/bookCab', (req, res) => {
             // If no row exists, generate a new ID and insert a new row
                 const insertQuery = queries.cabBookingTable.bookCab
 
-                db.query(insertQuery, [ employeeId, bookingDate, inTime, outTime], (err, result) => {
+                db.query(insertQuery, [ EmployeeId, bookingDate, inTime, outTime], (err, result) => {
                     if (err) {
                         console.error('Error creating trip:', err);
                         return res.status(500).send('Error creating trip');
